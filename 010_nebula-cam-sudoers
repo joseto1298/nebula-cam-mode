@@ -1,0 +1,2 @@
+# Nebula Cam Mode - cambia 'pi' por tu usuario si es diferente
+pi ALL=(ALL) NOPASSWD: /home/pi/nebula-cam-mode/nebula_cam_mode.py
