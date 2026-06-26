@@ -13,7 +13,7 @@ class CameraMode:
         self.logger = logging.getLogger(__name__)
 
         self.server.register_endpoint(
-            "/machine/camera_mode/panel", ["GET"], self._handle_panel
+            "/machine/camera_mode/panel", ["GET"], self._handle_panel, wrap_result=False
         )
         self.server.register_endpoint(
             "/machine/camera_mode/status", ["GET"], self._handle_status
@@ -71,8 +71,7 @@ class CameraMode:
     async def _handle_panel(self, web_request):
         status = await self._run("status")
         info = await self._run("info")
-        html = self._render_panel(status, info)
-        return web_request.send(html, status_code=200, content_type="text/html")
+        return self._render_panel(status, info)
 
     async def _handle_status(self, web_request):
         return await self._run("status")
