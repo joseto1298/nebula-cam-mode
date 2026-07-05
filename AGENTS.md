@@ -54,6 +54,7 @@ python3 nebula_cam_mode.py --device /dev/video2 status
 
 ## Gotchas
 
-- `install.sh` line 27 symlinks into `/home/pi/moonraker/moonraker/components/` — fails if Moonraker is installed elsewhere
-- Sudoers file uses `/home/pi/` (sudoers does not expand `~`)
 - The Moonraker component panel JS silences `refresh()` errors — check Moonraker logs if the panel is blank
+- `install.sh` auto-detects the non-root user (`$SUDO_USER`/`$USER`) and generates sudoers dynamically
+- `install.sh` probes `$HOME/moonraker`, `/usr/local/moonraker`, `/usr/share/moonraker` for legacy symlink
+- `cmd_set_ctrl()` / `cmd_get_ctrl()` now propagate `CURRENT_DEVICE` from `main()`

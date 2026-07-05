@@ -4,8 +4,13 @@ set -e
 echo "=== Nebula Camera Mode - Instalacion ==="
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-MOONRAKER_CUSTOM="$HOME/printer_data/moonraker/custom_components"
-MOONRAKER_CONF="$HOME/printer_data/config/moonraker.conf"
+
+# Detect actual user (handle sudo case)
+INSTALL_USER="${SUDO_USER:-$USER}"
+INSTALL_HOME="$(eval echo ~"$INSTALL_USER")"
+
+MOONRAKER_CUSTOM="$INSTALL_HOME/printer_data/moonraker/custom_components"
+MOONRAKER_CONF="$INSTALL_HOME/printer_data/config/moonraker.conf"
 
 # 1. Copiar plugin Moonraker
 mkdir -p "$MOONRAKER_CUSTOM"
@@ -22,18 +27,33 @@ else
     echo "[OK] [camera_mode] ya existe en moonraker.conf"
 fi
 
-# 3. Symlink en components de Moonraker (para compatibilidad con legacy)
-sudo ln -sf "$MOONRAKER_CUSTOM/camera_mode.py" \
-            "/home/pi/moonraker/moonraker/components/camera_mode.py" 2>/dev/null || true
+# 3. Symlink legacy en components de Moonraker (detecta ruta automáticamente)
+MOONRAKER_DIR=""
+for dir in "$INSTALL_HOME/moonraker" "/usr/local/moonraker" "/usr/share/moonraker"; do
+    if [ -d "$dir/moonraker/components" ]; then
+        MOONRAKER_DIR="$dir"
+        break
+    fi
+done
+if [ -n "$MOONRAKER_DIR" ]; then
+    sudo ln -sf "$MOONRAKER_CUSTOM/camera_mode.py" \
+                "$MOONRAKER_DIR/moonraker/components/camera_mode.py" 2>/dev/null || true
+    echo "[OK] Symlink legacy creado en $MOONRAKER_DIR/moonraker/components/"
+else
+    echo "[WARN] No se detectó instalación de Moonraker. El plugin se copió en custom_components."
+fi
 
-# 4. Sudoers para el script
-sudo cp "$SCRIPT_DIR/010_nebula-cam-sudoers" /etc/sudoers.d/010_nebula-cam
+# 4. Sudoers para el script (generado con usuario real, no hardcodeado)
+sudo tee /etc/sudoers.d/010_nebula-cam > /dev/null <<SUDOERS
+# Nebula Cam Mode - generado automáticamente por install.sh
+$INSTALL_USER ALL=(ALL) NOPASSWD: $INSTALL_HOME/nebula-cam-mode/nebula_cam_mode.py
+SUDOERS
 sudo chmod 440 /etc/sudoers.d/010_nebula-cam
-echo "[OK] Sudoers configurado."
+echo "[OK] Sudoers configurado para usuario $INSTALL_USER."
 
 # 5. Copiar navi.json (menu lateral en Mainsail)
-mkdir -p "$HOME/printer_data/config/.theme"
-cp "$SCRIPT_DIR/navi.json" "$HOME/printer_data/config/.theme/navi.json"
+mkdir -p "$INSTALL_HOME/printer_data/config/.theme"
+cp "$SCRIPT_DIR/navi.json" "$INSTALL_HOME/printer_data/config/.theme/navi.json"
 echo "[OK] navi.json copiado."
 
 # 6. Anadir proxy inverso en nginx
@@ -62,16 +82,16 @@ else
 fi
 
 # 7. Copiar script principal
-mkdir -p "$HOME/nebula-cam-mode"
-cp "$SCRIPT_DIR/nebula_cam_mode.py" "$HOME/nebula-cam-mode/nebula_cam_mode.py"
-chmod +x "$HOME/nebula-cam-mode/nebula_cam_mode.py"
-echo "[OK] Script copiado."
+mkdir -p "$INSTALL_HOME/nebula-cam-mode"
+cp "$SCRIPT_DIR/nebula_cam_mode.py" "$INSTALL_HOME/nebula-cam-mode/nebula_cam_mode.py"
+chmod +x "$INSTALL_HOME/nebula-cam-mode/nebula_cam_mode.py"
+echo "[OK] Script copiado a $INSTALL_HOME/nebula-cam-mode/."
 
 # 8. Copiar configs de Klipper (debes importarlos manualmente)
-mkdir -p "$HOME/printer_data/config"
-cp "$SCRIPT_DIR/camera_macros.cfg" "$HOME/printer_data/config/camera_macros.cfg"
-cp "$SCRIPT_DIR/shell_command_additions.cfg" "$HOME/printer_data/config/shell_command_additions.cfg"
-echo "[OK] Configs de Klipper copiados."
+mkdir -p "$INSTALL_HOME/printer_data/config"
+cp "$SCRIPT_DIR/camera_macros.cfg" "$INSTALL_HOME/printer_data/config/camera_macros.cfg"
+cp "$SCRIPT_DIR/shell_command_additions.cfg" "$INSTALL_HOME/printer_data/config/shell_command_additions.cfg"
+echo "[OK] Configs de Klipper copiados a $INSTALL_HOME/printer_data/config/."
 
 # 9. Reiniciar Moonraker
 sudo systemctl restart moonraker 2>/dev/null || echo "[WARN] No se pudo reiniciar Moonraker."

@@ -310,8 +310,8 @@ def cmd_set_ctrl(control, value, json_output, dev=None):
         print("Set %s = %s  (readback: %s)  [saved to %s profile]" % (control, value, new_val, mode))
 
 
-def cmd_get_ctrl(control, json_output):
-    val = v4l2_get(control)
+def cmd_get_ctrl(control, json_output, dev=None):
+    val = v4l2_get(control, dev)
     if json_output:
         print(json.dumps({"control": control, "value": val}))
         return
@@ -490,14 +490,14 @@ def main():
         if len(args) < 3:
             print("Usage: %s set <control> <value>" % sys.argv[0])
             sys.exit(1)
-        cmd_set_ctrl(args[1], args[2], json_output)
+        cmd_set_ctrl(args[1], args[2], json_output, CURRENT_DEVICE)
         return
 
     if arg1 == "get":
         if len(args) < 2:
             print("Usage: %s get <control>" % sys.argv[0])
             sys.exit(1)
-        cmd_get_ctrl(args[1], json_output)
+        cmd_get_ctrl(args[1], json_output, CURRENT_DEVICE)
         return
 
     if arg1 == "expose":
@@ -508,7 +508,11 @@ def main():
         if mode not in ("auto", "manual"):
             print("Invalid exposure mode: %s. Use 'auto' or 'manual'." % mode, file=sys.stderr)
             sys.exit(1)
-        exp_val = int(args[2]) if len(args) > 2 else None
+        try:
+            exp_val = int(args[2]) if len(args) > 2 else None
+        except ValueError:
+            print("Error: '%s' is not a valid integer for exposure value" % args[2], file=sys.stderr)
+            sys.exit(1)
         dev = CURRENT_DEVICE
         if not dev:
             print("Error: no Nebula camera detected.", file=sys.stderr)
