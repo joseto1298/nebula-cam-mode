@@ -4,6 +4,8 @@ Control de modo IR para la cámara **Creality Nebula Camera** en el ecosistema K
 
 Controla el filtro IR (día/noche/auto), brillo, contraste, exposición y demás controles V4L2 mediante una interfaz web en Mainsail o macros G-code desde Klipper.
 
+![Panel CAM MODE](screenshot.png)
+
 ## Instalación
 
 ```bash
