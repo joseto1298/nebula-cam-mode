@@ -1,6 +1,6 @@
 # Nebula Cam Mode
 
-Control de modo IR para la cámara **Creality Nebula NC01** en el ecosistema Klipper/Moonraker/Mainsail.
+Control de modo IR para la cámara **Creality Nebula Camera** en el ecosistema Klipper/Moonraker/Mainsail.
 
 Controla el filtro IR (día/noche/auto), brillo, contraste, exposición y demás controles V4L2 mediante una interfaz web en Mainsail o macros G-code desde Klipper.
 
